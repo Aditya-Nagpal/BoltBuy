@@ -1,0 +1,66 @@
+server:
+    port: 8081
+
+spring:
+    application:
+        name: order-service
+
+    kafka:
+        consumer:
+            bootstrap-servers: localhost:9092
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            auto-offset-reset: earliest
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
+            acks: all
+
+    data:
+        redis:
+            host: localhost
+            port: 6379
+
+logging:
+  structured:
+    format:
+      console: logstash  # This turns console logs into JSON
+    json:
+      add:
+        application: ${spring.application.name}
+        environment: local
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      orderService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10              # Check the last 10 requests
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 5            # Wait for at least 5 calls before calculating error rate
+        waitDurationInOpenState: 10s       # Wait 10s before trying again
+        failureRateThreshold: 50
+        
+management:
+    endpoints:
+        web:
+            exposure:
+                include: "health,info,metrics,prometheus"
+            base-path: /actuator
+    endpoint:
+        health:
+            show-details: always
+    metrics:
+        tags:
+            application: ${spring.application.name}
+    health:
+        redis:
+            enabled: true
+        kafka:
+            enabled: true
+
+app:
+    flash-sale:
+        enabled: true
+        product-id: 1

@@ -1,0 +1,55 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: worker-service
+  
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: flash-sale-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+logging:
+  structured:
+    format:
+      console: logstash  # This turns console logs into JSON
+    json:
+      add:
+        application: ${spring.application.name}
+        environment: local
+        
+management:
+    endpoints:
+        web:
+            exposure:
+                include: "health,info,metrics,prometheus"
+            base-path: /actuator
+    endpoint:
+        health:
+            show-details: always
+    metrics:
+        tags:
+            application: ${spring.application.name}
+    health:
+        redis:
+            enabled: true
+        kafka:
+            enabled: true
